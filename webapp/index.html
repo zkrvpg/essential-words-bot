@@ -2429,9 +2429,6 @@
     // ==============================================
     // QUIZ VIEW IMPLEMENTATION (WITH RETRY WRONG & SUMMARY)
     // ==============================================
-    let quizQuestions = [];
-    let currentQuizIndex = 0;
-    let quizScoreVal = 0;
     let wrongQuizQuestions = [];
 
     function initQuiz() {
@@ -2991,7 +2988,9 @@
     // ==============================================
     // APP INITIALIZATION
     // ==============================================
-    window.onload = async () => {
+    // APP INITIALIZATION
+    // ==============================================
+    async function initApp() {
       updateUserNameInDOM();
       renderBooks();
       // Show Books grid on startup so user sees all 6 books
@@ -2999,12 +2998,26 @@
       document.getElementById("unitsContainer").style.display = "none";
       document.getElementById("unitOverviewContainer").style.display = "none";
 
-      // Preload Book 1 Unit 1 data in background for Flashcards & Quiz tabs
-      await loadWordsForSelectedUnit(1, 1);
-      resetFlashcardsSession();
-      await syncAllSelectors();
-      await updateStatsView();
-    };
+      try {
+        await loadWordsForSelectedUnit(1, 1);
+        resetFlashcardsSession();
+        await syncAllSelectors();
+        await updateStatsView();
+      } catch (e) {
+        console.error("Init error:", e);
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
+    }
+    window.addEventListener("load", () => {
+      if (!document.getElementById("booksGrid")?.children.length) {
+        renderBooks();
+      }
+    });
   </script>
 </body>
 </html>
