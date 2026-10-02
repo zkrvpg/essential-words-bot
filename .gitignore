@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+mingit/
+cloudflared.exe
+check_ids.py
+tunnel_url.txt
+*.log

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: essential-words-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run_bot.py
+    envVars:
+      - key: BOT_TOKEN
+        value: 7868753159:AAHBTJVkYXV_uHwIq796H0IJbAdPgZp6jsM
