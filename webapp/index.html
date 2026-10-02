@@ -1435,58 +1435,108 @@
         </div>
       </div>
 
-      <div class="section-title">
-        <span>🗂 Flashcard</span>
-        <span id="cardCounter" style="font-size:15px; color:var(--text-muted); font-weight:bold;">1 / 20</span>
-      </div>
+      <!-- ACTIVE FLASHCARD CONTAINER -->
+      <div id="flashcardActiveContainer">
+        <div class="section-title">
+          <span id="fcModeTitle">🗂 Flashcard</span>
+          <span id="cardCounter" style="font-size:15px; color:var(--text-muted); font-weight:bold;">1 / 20</span>
+        </div>
 
-      <div class="flashcard-wrapper" onclick="flipCard()">
-        <div class="flashcard" id="mainFlashcard">
-          <!-- FRONT FACE -->
-          <div class="card-face front">
-            <div class="card-top">
-              <span>English Vocabulary</span>
-              <span id="cardPosBadge" style="background:rgba(245,158,11,0.15); color:#fbbf24; padding:3px 10px; border-radius:8px; font-weight:bold;">verb</span>
+        <div class="flashcard-wrapper" onclick="flipCard()">
+          <div class="flashcard" id="mainFlashcard">
+            <!-- FRONT FACE -->
+            <div class="card-face front">
+              <div class="card-top">
+                <span>English Vocabulary</span>
+                <span id="cardPosBadge" style="background:rgba(245,158,11,0.15); color:#fbbf24; padding:3px 10px; border-radius:8px; font-weight:bold;">verb</span>
+              </div>
+              <div class="card-center">
+                <div class="target-word" id="fcWord">agree</div>
+                <div class="phonetic" id="fcPro">/əˈɡriː/</div>
+                <button class="audio-btn" onclick="event.stopPropagation(); playCurrentAudio()">
+                  🔊 Talaffuz
+                </button>
+              </div>
+              <div class="flip-hint">
+                🔄 Kartani aylantirish uchun bosing
+              </div>
             </div>
-            <div class="card-center">
-              <div class="target-word" id="fcWord">agree</div>
-              <div class="phonetic" id="fcPro">/əˈɡriː/</div>
-              <button class="audio-btn" onclick="event.stopPropagation(); playCurrentAudio()">
-                🔊 Talaffuz
-              </button>
-            </div>
-            <div class="flip-hint">
-              🔄 Kartani aylantirish uchun bosing
-            </div>
-          </div>
-          <!-- BACK FACE -->
-          <div class="card-face back">
-            <div class="card-top">
-              <span style="color:#34d399; font-weight:bold;">O'zbekcha ma'nosi</span>
-              <span id="fcBackPos" style="color:var(--text-muted); font-weight:bold;">fe'l</span>
-            </div>
-            <div class="card-center">
-              <div class="translation-uz" id="fcUz">rozi bo'lmoq, qo'shilmoq</div>
-              <div class="card-def" id="fcDef">To agree is to have the same opinion or belief as another person.</div>
-              <div class="card-ex" id="fcEx">The students agree they have too much homework.</div>
-            </div>
-            <div class="flip-hint">
-              🔄 Oldi tomonga qaytish
+            <!-- BACK FACE -->
+            <div class="card-face back">
+              <div class="card-top">
+                <span style="color:#34d399; font-weight:bold;">O'zbekcha ma'nosi</span>
+                <span id="fcBackPos" style="color:var(--text-muted); font-weight:bold;">fe'l</span>
+              </div>
+              <div class="card-center">
+                <div class="translation-uz" id="fcUz">rozi bo'lmoq, qo'shilmoq</div>
+                <div class="card-def" id="fcDef">To agree is to have the same opinion or belief as another person.</div>
+                <div class="card-ex" id="fcEx">The students agree they have too much homework.</div>
+              </div>
+              <div class="flip-hint">
+                🔄 Oldi tomonga qaytish
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="card-actions">
+          <button class="action-btn btn-unknown" onclick="nextCard(false)">
+            ❌ Bilmayman (←)
+          </button>
+          <button class="action-btn btn-known" onclick="nextCard(true)">
+            ✅ Bilaman (→)
+          </button>
+        </div>
+        <div class="keyboard-hint-bar">
+          ⌨️ Kompyuterda: [Bo'sh joy / Space] - Aylantirish | [← Chapga] - Bilmayman | [O'ngga →] - Bilaman
+        </div>
       </div>
 
-      <div class="card-actions">
-        <button class="action-btn btn-unknown" onclick="nextCard(false)">
-          ❌ Bilmayman (←)
-        </button>
-        <button class="action-btn btn-known" onclick="nextCard(true)">
-          ✅ Bilaman (→)
-        </button>
-      </div>
-      <div class="keyboard-hint-bar">
-        ⌨️ Kompyuterda: [Bo'sh joy / Space] - Aylantirish | [← Chapga] - Bilmayman | [O'ngga →] - Bilaman
+      <!-- UNIT COMPLETION RESULT CONTAINER -->
+      <div id="flashcardResultContainer" class="book-section-card" style="display:none; text-align:center; max-width:650px; margin:20px auto; padding:32px 24px;">
+        <div id="fcResultBadge" style="font-size:64px; margin-bottom:12px;">🎉</div>
+        <h2 id="fcResultTitle" style="font-size:26px; font-weight:bold; margin-bottom:8px; color:#ffffff;">Unit Yakunlandi!</h2>
+        <div id="fcResultStatus" style="font-size:19px; font-weight:bold; margin-bottom:18px;"></div>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--card-border); border-radius:var(--radius-lg); padding:20px; margin-bottom:24px;">
+          <div style="font-size:44px; font-weight:bold; color:var(--accent); margin-bottom:4px;" id="fcResultPct">85%</div>
+          <div style="font-size:15px; color:var(--text-muted); font-style:italic;">Bilgan so'zlaringiz foizi</div>
+          <div class="progress-bar-bg" style="margin:16px auto 14px; max-width:400px;">
+            <div id="fcResultBar" class="progress-bar-fill" style="width:85%;"></div>
+          </div>
+          
+          <div style="display:flex; justify-content:space-around; margin-top:16px; border-top:1px solid rgba(255,255,255,0.06); padding-top:14px;">
+            <div>
+              <div style="font-size:22px; font-weight:bold; color:#10b981;" id="fcResultKnownCount">17</div>
+              <div style="font-size:13px; color:var(--text-muted);">✅ Bilgan so'zlar</div>
+            </div>
+            <div>
+              <div style="font-size:22px; font-weight:bold; color:#f43f5e;" id="fcResultUnknownCount">3</div>
+              <div style="font-size:13px; color:var(--text-muted);">❌ Bilmagan so'zlar</div>
+            </div>
+            <div>
+              <div style="font-size:22px; font-weight:bold; color:#38bdf8;" id="fcResultTotalCount">20</div>
+              <div style="font-size:13px; color:var(--text-muted);">📚 Jami so'zlar</div>
+            </div>
+          </div>
+        </div>
+
+        <p id="fcResultFeedback" style="font-size:16px; line-height:1.6; margin-bottom:24px; color:#cbd5e1;"></p>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <button id="fcRepeatUnknownBtn" class="action-btn" onclick="startRepeatUnknownFlashcards()" style="background:var(--danger-grad); color:#ffffff; font-size:17px; padding:16px; box-shadow:0 4px 16px rgba(244,63,94,0.3);">
+            🔁 Bilmagan so'zlarni qaytadan takrorlash (<span id="fcRepeatUnknownCountLabel">3</span> ta)
+          </button>
+          <button class="action-btn btn-known" onclick="restartEntireUnitFlashcards()" style="font-size:16px; padding:14px;">
+            🔄 Butun unitni qaytadan boshlash
+          </button>
+          <button class="action-btn" onclick="goToNextUnit()" style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:16px; padding:14px;">
+            ➡️ Keyingi Unitga o'tish ➔
+          </button>
+          <button class="btn-read-material" onclick="goToUnitBookMaterial()" style="margin-top:8px; justify-content:center;">
+            📖 Darslik matnini o'qishga qaytish
+          </button>
+        </div>
       </div>
     </section>
 
@@ -1528,18 +1578,67 @@
         <span id="quizScore" style="color:#10b981; font-weight:bold;">Ball: 0</span>
       </div>
 
-      <div class="quiz-card">
-        <div class="quiz-header">
-          <span id="quizCounter">Savol 1 / 10</span>
-          <span id="quizUnitName" style="color:var(--accent); font-weight:bold;">Unit 1</span>
+      <div id="quizActiveContainer">
+        <div class="quiz-card">
+          <div class="quiz-header">
+            <span id="quizCounter">Savol 1 / 10</span>
+            <span id="quizUnitName" style="color:var(--accent); font-weight:bold;">Unit 1</span>
+          </div>
+          <div class="quiz-question" id="quizQuestionText">
+            "AGREE" so'zining tarjimasi qaysi?
+          </div>
+          <div class="quiz-options" id="quizOptions"></div>
         </div>
-        <div class="quiz-question" id="quizQuestionText">
-          "AGREE" so'zining tarjimasi qaysi?
+        <div class="keyboard-hint-bar">
+          ⌨️ Kompyuterda: [1, 2, 3, 4] tugmalari orqali variantlarni tezkor tanlashingiz mumkin
         </div>
-        <div class="quiz-options" id="quizOptions"></div>
       </div>
-      <div class="keyboard-hint-bar">
-        ⌨️ Kompyuterda: [1, 2, 3, 4] tugmalari orqali variantlarni tezkor tanlashingiz mumkin
+
+      <!-- QUIZ RESULT CONTAINER -->
+      <div id="quizResultContainer" class="book-section-card" style="display:none; text-align:center; max-width:650px; margin:20px auto; padding:32px 24px;">
+        <div id="quizResultBadge" style="font-size:64px; margin-bottom:12px;">🎉</div>
+        <h2 id="quizResultTitle" style="font-size:26px; font-weight:bold; margin-bottom:8px; color:#ffffff;">Test Yakunlandi!</h2>
+        <div id="quizResultStatus" style="font-size:19px; font-weight:bold; margin-bottom:18px;"></div>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--card-border); border-radius:var(--radius-lg); padding:20px; margin-bottom:24px;">
+          <div style="font-size:44px; font-weight:bold; color:var(--accent); margin-bottom:4px;" id="quizResultPct">85%</div>
+          <div style="font-size:15px; color:var(--text-muted); font-style:italic;">Test natijasi foizi</div>
+          <div class="progress-bar-bg" style="margin:16px auto 14px; max-width:400px;">
+            <div id="quizResultBar" class="progress-bar-fill" style="width:85%;"></div>
+          </div>
+          
+          <div style="display:flex; justify-content:space-around; margin-top:16px; border-top:1px solid rgba(255,255,255,0.06); padding-top:14px;">
+            <div>
+              <div style="font-size:22px; font-weight:bold; color:#10b981;" id="quizResultCorrectCount">17</div>
+              <div style="font-size:13px; color:var(--text-muted);">✅ To'g'ri javob</div>
+            </div>
+            <div>
+              <div style="font-size:22px; font-weight:bold; color:#f43f5e;" id="quizResultWrongCount">3</div>
+              <div style="font-size:13px; color:var(--text-muted);">❌ Xato javob</div>
+            </div>
+            <div>
+              <div style="font-size:22px; font-weight:bold; color:#38bdf8;" id="quizResultTotalCount">20</div>
+              <div style="font-size:13px; color:var(--text-muted);">📚 Jami savollar</div>
+            </div>
+          </div>
+        </div>
+
+        <p id="quizResultFeedback" style="font-size:16px; line-height:1.6; margin-bottom:24px; color:#cbd5e1;"></p>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <button id="quizRepeatWrongBtn" class="action-btn" onclick="startRepeatWrongQuiz()" style="background:var(--danger-grad); color:#ffffff; font-size:17px; padding:16px; box-shadow:0 4px 16px rgba(244,63,94,0.3);">
+            🔁 Xato qilingan savollarni qayta ishlash (<span id="quizRepeatWrongCountLabel">3</span> ta)
+          </button>
+          <button class="action-btn btn-known" onclick="initQuiz()" style="font-size:16px; padding:14px;">
+            🔄 Butun testni qaytadan boshlash
+          </button>
+          <button class="action-btn" onclick="goToNextUnit('quiz')" style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:16px; padding:14px;">
+            ➡️ Keyingi Unit testiga o'tish ➔
+          </button>
+          <button class="btn-read-material" onclick="goToUnitBookMaterial()" style="margin-top:8px; justify-content:center;">
+            📖 Darslik matnini ko'rish
+          </button>
+        </div>
       </div>
     </section>
 
@@ -2050,8 +2149,7 @@
     // ==============================================
     function startUnitFlashcards() {
       syncAllSelectors();
-      currentCardIndex = 0;
-      updateFlashcardView();
+      resetFlashcardsSession();
       switchTab('cards');
     }
 
@@ -2117,8 +2215,7 @@
       await syncAllSelectors();
 
       if (mode === 'fc') {
-        currentCardIndex = 0;
-        updateFlashcardView();
+        resetFlashcardsSession();
       } else if (mode === 'quiz') {
         initQuiz();
       } else if (mode === 'spell') {
@@ -2137,8 +2234,7 @@
       await syncAllSelectors();
 
       if (mode === 'fc') {
-        currentCardIndex = 0;
-        updateFlashcardView();
+        resetFlashcardsSession();
       } else if (mode === 'quiz') {
         initQuiz();
       } else if (mode === 'spell') {
@@ -2180,12 +2276,30 @@
     }
 
     // ==============================================
-    // FLASHCARD VIEW IMPLEMENTATION
+    // FLASHCARD VIEW IMPLEMENTATION (WITH UNKNOWN WORDS REVIEW & UNIT SUMMARY)
     // ==============================================
+    let unitStudiedWords = [];
+    let sessionKnownWords = [];
+    let sessionUnknownWords = [];
+    let isRepeatingUnknown = false;
+
+    function resetFlashcardsSession() {
+      unitStudiedWords = [...currentWords];
+      sessionKnownWords = [];
+      sessionUnknownWords = [];
+      currentCardIndex = 0;
+      isRepeatingUnknown = false;
+      document.getElementById("flashcardActiveContainer").style.display = "block";
+      document.getElementById("flashcardResultContainer").style.display = "none";
+      document.getElementById("fcModeTitle").innerText = "🗂 Flashcard";
+      updateFlashcardView();
+    }
+
     function updateFlashcardView() {
-      if (!currentWords || currentWords.length === 0) return;
-      const w = currentWords[currentCardIndex];
-      document.getElementById("cardCounter").innerText = `${currentCardIndex + 1} / ${currentWords.length}`;
+      if (!unitStudiedWords || unitStudiedWords.length === 0) return;
+      const w = unitStudiedWords[currentCardIndex];
+      const counterText = `${currentCardIndex + 1} / ${unitStudiedWords.length}`;
+      document.getElementById("cardCounter").innerText = counterText;
       
       document.getElementById("fcWord").innerText = w.word;
       document.getElementById("fcPro").innerText = w.phonetic || "";
@@ -2205,32 +2319,121 @@
     }
 
     async function nextCard(known) {
-      const w = currentWords[currentCardIndex];
-      if (known && w) {
+      if (!unitStudiedWords || unitStudiedWords.length === 0) return;
+      const w = unitStudiedWords[currentCardIndex];
+      
+      if (known) {
+        if (!sessionKnownWords.some(x => x.id === w.id)) sessionKnownWords.push(w);
+        sessionUnknownWords = sessionUnknownWords.filter(x => x.id !== w.id);
         try {
-          const res = await fetch('/api/user/toggle_learned', {
+          fetch('/api/user/toggle_learned', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: currentUserId, word_id: w.id })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.stats) applyStatsToUI(data.stats);
-          }
+          }).then(r => r.json()).then(d => { if (d.stats) applyStatsToUI(d.stats); }).catch(e => {});
         } catch(e) {}
+      } else {
+        if (!sessionUnknownWords.some(x => x.id === w.id)) sessionUnknownWords.push(w);
+        sessionKnownWords = sessionKnownWords.filter(x => x.id !== w.id);
       }
-      currentCardIndex = (currentCardIndex + 1) % currentWords.length;
+
+      currentCardIndex++;
+      if (currentCardIndex >= unitStudiedWords.length) {
+        finishFlashcardsSession();
+      } else {
+        updateFlashcardView();
+      }
+    }
+
+    function finishFlashcardsSession() {
+      const total = unitStudiedWords.length;
+      const knownCount = sessionKnownWords.length;
+      const unknownCount = sessionUnknownWords.length;
+      const pct = total > 0 ? Math.round((knownCount / total) * 100) : 0;
+
+      document.getElementById("flashcardActiveContainer").style.display = "none";
+      document.getElementById("flashcardResultContainer").style.display = "block";
+
+      document.getElementById("fcResultTitle").innerText = `Book ${currentBook} • Unit ${currentUnit} Yakunlandi!`;
+      document.getElementById("fcResultPct").innerText = `${pct}%`;
+      document.getElementById("fcResultBar").style.width = `${Math.max(5, pct)}%`;
+      document.getElementById("fcResultKnownCount").innerText = knownCount;
+      document.getElementById("fcResultUnknownCount").innerText = unknownCount;
+      document.getElementById("fcResultTotalCount").innerText = total;
+
+      const badgeElem = document.getElementById("fcResultBadge");
+      const statusElem = document.getElementById("fcResultStatus");
+      const feedbackElem = document.getElementById("fcResultFeedback");
+      const barElem = document.getElementById("fcResultBar");
+
+      if (pct >= 90) {
+        badgeElem.innerText = "🏆";
+        statusElem.innerHTML = `<span style="color:#10b981;">A'lo natija! Muvaffaqiyatli o'zlashtirildi!</span>`;
+        feedbackElem.innerText = "Qoyilmaqom! Unitdagi so'zlarni deyarli mukammal yod oldingiz. Yangi unitga bemalol o'tishingiz mumkin!";
+        barElem.style.background = "var(--success-grad)";
+        triggerConfetti();
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      } else if (pct >= 70) {
+        badgeElem.innerText = "👍";
+        statusElem.innerHTML = `<span style="color:#38bdf8;">Yaxshi natija!</span>`;
+        feedbackElem.innerText = "So'zlarning asosiy qismini bilasiz. Bilmagan so'zlaringizni bir marta takrorlab olsangiz, xotirangizda mustahkamlanadi.";
+        barElem.style.background = "var(--accent-grad)";
+        triggerConfetti();
+      } else if (pct >= 50) {
+        badgeElem.innerText = "⚠️";
+        statusElem.innerHTML = `<span style="color:#f59e0b;">Qoniqarli (O'rtacha natija)</span>`;
+        feedbackElem.innerText = "So'zlarning yarmini bildingiz, ammo hali to'liq yodlanmagan so'zlar bor. Bilmagan so'zlarni qaytadan takrorlash tavsiya etiladi.";
+        barElem.style.background = "var(--warning-grad)";
+      } else {
+        badgeElem.innerText = "❌";
+        statusElem.innerHTML = `<span style="color:#f43f5e;">Qoniqarsiz (Yomon natija)!</span>`;
+        feedbackElem.innerText = "Unit so'zlarining ko'pchiligini eslay olmadingiz. Darslik matnini va lug'atini qaytadan o'qib chiqishni tavsiya qilamiz.";
+        barElem.style.background = "var(--danger-grad)";
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+      }
+
+      const repeatBtn = document.getElementById("fcRepeatUnknownBtn");
+      if (unknownCount > 0) {
+        repeatBtn.style.display = "block";
+        document.getElementById("fcRepeatUnknownCountLabel").innerText = unknownCount;
+      } else {
+        repeatBtn.style.display = "none";
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startRepeatUnknownFlashcards() {
+      if (sessionUnknownWords.length === 0) return;
+      unitStudiedWords = [...sessionUnknownWords];
+      sessionKnownWords = [];
+      sessionUnknownWords = [];
+      currentCardIndex = 0;
+      isRepeatingUnknown = true;
+      document.getElementById("flashcardActiveContainer").style.display = "block";
+      document.getElementById("flashcardResultContainer").style.display = "none";
+      document.getElementById("fcModeTitle").innerText = "🔁 Takrorlash (Bilmagan so'zlar)";
       updateFlashcardView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restartEntireUnitFlashcards() {
+      resetFlashcardsSession();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function playCurrentAudio() {
-      const w = currentWords[currentCardIndex];
+      const w = unitStudiedWords && unitStudiedWords[currentCardIndex] ? unitStudiedWords[currentCardIndex] : (currentWords[0] || null);
       if (w) playWordAudio(w.audio_url, w.word);
     }
 
     // ==============================================
-    // QUIZ VIEW IMPLEMENTATION
+    // QUIZ VIEW IMPLEMENTATION (WITH RETRY WRONG & SUMMARY)
     // ==============================================
+    let quizQuestions = [];
+    let currentQuizIndex = 0;
+    let quizScoreVal = 0;
+    let wrongQuizQuestions = [];
+
     function initQuiz() {
       if (!currentWords || currentWords.length === 0) return;
       quizQuestions = currentWords.map(w => {
@@ -2238,6 +2441,7 @@
         const distractors = otherWords.sort(() => 0.5 - Math.random()).slice(0, 3).map(x => x.translation_uz);
         const options = [w.translation_uz, ...distractors].sort(() => 0.5 - Math.random());
         return {
+          word: w.word,
           question: `🇬🇧 "${w.word.toUpperCase()}" so'zining tarjimasi qaysi?`,
           correct: w.translation_uz,
           options: options
@@ -2245,40 +2449,21 @@
       });
       currentQuizIndex = 0;
       quizScoreVal = 0;
+      wrongQuizQuestions = [];
+      document.getElementById("quizActiveContainer").style.display = "block";
+      document.getElementById("quizResultContainer").style.display = "none";
       renderQuizQuestion();
     }
 
     async function renderQuizQuestion() {
       if (currentQuizIndex >= quizQuestions.length) {
-        const pct = Math.round((quizScoreVal / quizQuestions.length) * 100);
-        triggerConfetti();
-        document.getElementById("quizQuestionText").innerText = `🎉 Test Yakunlandi!\n${quizQuestions.length} tadan ${quizScoreVal} tasiga to'g'ri javob berdingiz (${pct}%)!`;
-        document.getElementById("quizOptions").innerHTML = `
-          <button class="action-btn btn-known" onclick="initQuiz()">🔁 Testni qayta ishlash</button>
-          <button class="action-btn btn-unknown" onclick="goToUnitBookMaterial()" style="margin-top:8px; background:rgba(56,189,248,0.2); color:#38bdf8;">📖 Unit kitob matnini o'qish</button>
-        `;
-
-        try {
-          const res = await fetch('/api/user/quiz_result', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: currentUserId,
-              correct: quizScoreVal,
-              total: quizQuestions.length
-            })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.stats) applyStatsToUI(data.stats);
-          }
-        } catch(e) {}
+        finishQuizSession();
         return;
       }
       const q = quizQuestions[currentQuizIndex];
       document.getElementById("quizCounter").innerText = `Savol ${currentQuizIndex + 1} / ${quizQuestions.length}`;
       document.getElementById("quizScore").innerText = `Ball: ${quizScoreVal}`;
-      document.getElementById("quizUnitName").innerText = `Unit ${currentUnit}`;
+      document.getElementById("quizUnitName").innerText = `Book ${currentBook} | Unit ${currentUnit}`;
       document.getElementById("quizQuestionText").innerText = q.question;
       
       const letters = ['A', 'B', 'C', 'D'];
@@ -2291,6 +2476,7 @@
     }
 
     function checkQuizAnswer(btn, chosen, correct) {
+      const q = quizQuestions[currentQuizIndex];
       const allBtns = document.querySelectorAll(".quiz-opt");
       allBtns.forEach(b => b.disabled = true);
       if (chosen === correct) {
@@ -2299,6 +2485,7 @@
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
       } else {
         btn.classList.add("wrong");
+        wrongQuizQuestions.push(q);
         allBtns.forEach(b => {
           if (b.innerText.includes(correct)) b.classList.add("correct");
         });
@@ -2308,6 +2495,109 @@
         currentQuizIndex++;
         renderQuizQuestion();
       }, 1000);
+    }
+
+    function finishQuizSession() {
+      const total = quizQuestions.length;
+      const correctCount = quizScoreVal;
+      const wrongCount = wrongQuizQuestions.length;
+      const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+      document.getElementById("quizActiveContainer").style.display = "none";
+      document.getElementById("quizResultContainer").style.display = "block";
+
+      document.getElementById("quizResultTitle").innerText = `Book ${currentBook} • Unit ${currentUnit} Testi Yakunlandi!`;
+      document.getElementById("quizResultPct").innerText = `${pct}%`;
+      document.getElementById("quizResultBar").style.width = `${Math.max(5, pct)}%`;
+      document.getElementById("quizResultCorrectCount").innerText = correctCount;
+      document.getElementById("quizResultWrongCount").innerText = wrongCount;
+      document.getElementById("quizResultTotalCount").innerText = total;
+
+      const badgeElem = document.getElementById("quizResultBadge");
+      const statusElem = document.getElementById("quizResultStatus");
+      const feedbackElem = document.getElementById("quizResultFeedback");
+      const barElem = document.getElementById("quizResultBar");
+
+      if (pct >= 90) {
+        badgeElem.innerText = "🏆";
+        statusElem.innerHTML = `<span style="color:#10b981;">A'lo natija! Muvaffaqiyatli topshirildi!</span>`;
+        feedbackElem.innerText = "Mukammal bilim! Savollarning deyarli barchasiga xatosiz javob berdingiz. Yangi unitga bemalol o'tishingiz mumkin!";
+        barElem.style.background = "var(--success-grad)";
+        triggerConfetti();
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      } else if (pct >= 70) {
+        badgeElem.innerText = "👍";
+        statusElem.innerHTML = `<span style="color:#38bdf8;">Yaxshi natija!</span>`;
+        feedbackElem.innerText = "Yaxshi ko'rsatkich! Deyarli hamma savollarga to'g'ri javob berdingiz. Xato qilgan savollaringizni qayta ishlab mustahkamlab oling.";
+        barElem.style.background = "var(--accent-grad)";
+        triggerConfetti();
+      } else if (pct >= 50) {
+        badgeElem.innerText = "⚠️";
+        statusElem.innerHTML = `<span style="color:#f59e0b;">Qoniqarli (O'rtacha natija)</span>`;
+        feedbackElem.innerText = "Savollarning yarmini to'g'ri topdingiz. Qolgan xato savollarni qayta ishlashni tavsiya qilamiz.";
+        barElem.style.background = "var(--warning-grad)";
+      } else {
+        badgeElem.innerText = "❌";
+        statusElem.innerHTML = `<span style="color:#f43f5e;">Qoniqarsiz (Yomon natija)!</span>`;
+        feedbackElem.innerText = "Ko'p xatolarga yo'l qo'ydingiz. Unit darslik matnini va so'zlarni qaytadan o'qib chiqishingiz lozim.";
+        barElem.style.background = "var(--danger-grad)";
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+      }
+
+      const repeatBtn = document.getElementById("quizRepeatWrongBtn");
+      if (wrongCount > 0) {
+        repeatBtn.style.display = "block";
+        document.getElementById("quizRepeatWrongCountLabel").innerText = wrongCount;
+      } else {
+        repeatBtn.style.display = "none";
+      }
+
+      // Record quiz stats to SQLite backend
+      try {
+        fetch('/api/user/quiz_result', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: currentUserId,
+            correct: correctCount,
+            total: total
+          })
+        }).then(r => r.json()).then(d => { if (d.stats) applyStatsToUI(d.stats); }).catch(e => {});
+      } catch(e) {}
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startRepeatWrongQuiz() {
+      if (wrongQuizQuestions.length === 0) return;
+      quizQuestions = [...wrongQuizQuestions];
+      wrongQuizQuestions = [];
+      currentQuizIndex = 0;
+      quizScoreVal = 0;
+      document.getElementById("quizActiveContainer").style.display = "block";
+      document.getElementById("quizResultContainer").style.display = "none";
+      renderQuizQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goToNextUnit(targetTab = null) {
+      if (currentUnit < 30) {
+        currentUnit++;
+      } else if (currentBook < 6) {
+        currentBook++;
+        currentUnit = 1;
+      } else {
+        alert("Tabriklaymiz! Siz barcha 6 ta kitobni muvaffaqiyatli yakunladingiz!");
+        return;
+      }
+      loadWordsForSelectedUnit(currentBook, currentUnit).then(() => {
+        syncAllSelectors();
+        if (targetTab === 'quiz') {
+          initQuiz();
+        } else {
+          resetFlashcardsSession();
+        }
+      });
     }
 
     // ==============================================
@@ -2589,7 +2879,11 @@
         startBotBattle();
       }
       if (tab === 'cards') {
-        updateFlashcardView();
+        if (!unitStudiedWords || unitStudiedWords.length === 0) {
+          resetFlashcardsSession();
+        } else {
+          updateFlashcardView();
+        }
       }
       if (tab === 'spelling') {
         setTimeout(() => document.getElementById("spellInput")?.focus(), 200);
@@ -2707,6 +3001,7 @@
 
       // Preload Book 1 Unit 1 data in background for Flashcards & Quiz tabs
       await loadWordsForSelectedUnit(1, 1);
+      resetFlashcardsSession();
       await syncAllSelectors();
       await updateStatsView();
     };
