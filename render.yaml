@@ -8,3 +8,5 @@ services:
     envVars:
       - key: BOT_TOKEN
         value: 7868753159:AAHBTJVkYXV_uHwIq796H0IJbAdPgZp6jsM
+      - key: WEBAPP_URL
+        value: https://essential-words-bot.onrender.com

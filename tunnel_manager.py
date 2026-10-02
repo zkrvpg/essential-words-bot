@@ -35,7 +35,7 @@ def get_web_app_url() -> str:
                     return u
         except Exception:
             pass
-    return "http://localhost:8080"
+    return "https://essential-words-bot.onrender.com"
 
 def update_telegram_menu_button(web_app_url: str):
     """Sets the Telegram bot chat menu button to the WebApp URL."""
