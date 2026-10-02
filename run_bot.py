@@ -72,7 +72,7 @@ def run():
         try:
             app = build_application()
             print("[+] Bot muvaffaqiyatli ishga tushdi va xabarlarni kutmoqda!", flush=True)
-            app.run_polling(drop_pending_updates=True, close_loop=False)
+            app.run_polling(drop_pending_updates=False, close_loop=False)
         except Exception as e:
             logger.error(f"Botda xatolik yuz berdi: {e}", exc_info=True)
             print("[!] 5 soniyadan so'ng qayta ishga tushiriladi...", flush=True)

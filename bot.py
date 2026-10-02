@@ -133,12 +133,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await update.message.reply_text("Ushbu jang xonasi to'lgan yoki yakunlangan.")
 
+    safe_name = (user.first_name or "O'quvchi").replace("*", "").replace("_", " ").replace("`", "").replace("[", "")
     stats = await db.get_user_stats(user.id)
     web_url = tunnel_manager.get_web_app_url()
     browser_link = f"🌐 *Kompyuter brauzerida to'liq ochish:* [Ushbu havolani bosing]({web_url})\n\n" if web_url and web_url.startswith("https://") else ""
 
     welcome_text = (
-        f"👋 *Assalomu alaykum, {user.first_name}!*\n\n"
+        f"👋 *Assalomu alaykum, {safe_name}!*\n\n"
         f"📚 *4000 Essential English Words* interaktiv ta'lim akademiyasiga xush kelibsiz!\n\n"
         f"Paul Nation'ning 6 ta kitobi, 180 ta uniti va barcha 3600 ta so'zini zamonaviy usullarda o'rganing:\n\n"
         f"🏆 *Sizning darajangiz:* {stats['level_title']}\n"
@@ -152,21 +153,40 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if update.message:
-        await update.message.reply_text(
-            "Asosiy menyu:",
-            reply_markup=kb.persistent_reply_kb()
-        )
-        await update.message.reply_text(
-            welcome_text,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=kb.main_menu_inline_kb()
-        )
+        try:
+            await update.message.reply_text(
+                "Asosiy menyu:",
+                reply_markup=kb.persistent_reply_kb()
+            )
+        except Exception as e:
+            logger.error(f"Error sending persistent keyboard: {e}")
+
+        try:
+            await update.message.reply_text(
+                welcome_text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=kb.main_menu_inline_kb()
+            )
+        except Exception as e:
+            logger.error(f"Markdown send error in start_command: {e}")
+            clean_text = welcome_text.replace("*", "").replace("`", "").replace("[", "").replace("]", "")
+            await update.message.reply_text(
+                clean_text,
+                reply_markup=kb.main_menu_inline_kb()
+            )
     elif update.callback_query:
-        await update.callback_query.edit_message_text(
-            welcome_text,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=kb.main_menu_inline_kb()
-        )
+        try:
+            await update.callback_query.edit_message_text(
+                welcome_text,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=kb.main_menu_inline_kb()
+            )
+        except Exception as e:
+            clean_text = welcome_text.replace("*", "").replace("`", "").replace("[", "").replace("]", "")
+            await update.callback_query.edit_message_text(
+                clean_text,
+                reply_markup=kb.main_menu_inline_kb()
+            )
 
 async def learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles /learn command."""
@@ -1244,6 +1264,11 @@ def build_application() -> Application:
 
     # Text messages
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
+
+    async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        logger.error(f"Global bot error on update {update}: {context.error}")
+
+    app.add_error_handler(global_error_handler)
 
     return app
 
