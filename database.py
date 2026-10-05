@@ -571,3 +571,85 @@ async def update_battle_ratings(db, winner_id: int, loser_id: int):
             battle_rating = MAX(500, COALESCE(battle_rating, 1000) - 15)
         WHERE user_id = ?
     """, (loser_id,))
+
+async def add_custom_words(
+    book_id: int,
+    unit_number: int,
+    unit_title: str,
+    words: List[Dict],
+    book_title: Optional[str] = None,
+    cefr_level: str = "B2",
+    story: str = ""
+) -> Tuple[bool, int, str]:
+    """
+    Inserts or updates a book, unit, and list of words.
+    words: list of dicts with keys: word, phonetic, part_of_speech, part_of_speech_uz, definition, example, translation_uz
+    """
+    async with aiosqlite.connect(DB_PATH) as db:
+        try:
+            # Check or create book
+            if book_title:
+                await db.execute("""
+                    INSERT INTO books (id, title, cefr_level, description)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        title = excluded.title,
+                        cefr_level = excluded.cefr_level
+                """, (book_id, book_title, cefr_level, f"{book_title} ({cefr_level})"))
+            else:
+                # Ensure book exists
+                async with db.execute("SELECT id FROM books WHERE id = ?", (book_id,)) as cur:
+                    if not await cur.fetchone():
+                        await db.execute("""
+                            INSERT INTO books (id, title, cefr_level, description)
+                            VALUES (?, ?, ?, ?)
+                        """, (book_id, f"Book {book_id}", cefr_level, "Qo'shimcha so'zlar to'plami"))
+
+            # Insert or update unit
+            await db.execute("""
+                INSERT INTO units (book_id, unit_number, title, story)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(book_id, unit_number) DO UPDATE SET
+                    title = excluded.title,
+                    story = CASE WHEN excluded.story != '' THEN excluded.story ELSE units.story END
+            """, (book_id, unit_number, unit_title, story))
+
+            async with db.execute("SELECT id FROM units WHERE book_id = ? AND unit_number = ?", (book_id, unit_number)) as cur:
+                unit_row = await cur.fetchone()
+                unit_id = unit_row[0]
+
+            # Get current max word_index
+            async with db.execute("SELECT COALESCE(MAX(word_index), 0) FROM words WHERE book_id = ? AND unit_number = ?", (book_id, unit_number)) as cur:
+                cur_max = (await cur.fetchone())[0]
+
+            added = 0
+            for idx, w in enumerate(words):
+                w_index = cur_max + idx + 1
+                word_clean = w["word"].strip()
+                phonetic = w.get("phonetic", "").strip()
+                pos = w.get("part_of_speech", "").strip() or "n."
+                pos_uz = w.get("part_of_speech_uz", "").strip() or "ot (noun)"
+                defn = w.get("definition", "").strip() or f"Definition of {word_clean}."
+                ex = w.get("example", "").strip() or f"Example sentence using {word_clean}."
+                tr_uz = w.get("translation_uz", "").strip() or word_clean
+                audio_url = f"https://dict.youdao.com/dictvoice?audio={word_clean}&type=2"
+
+                await db.execute("""
+                    INSERT INTO words (book_id, unit_id, unit_number, word_index, word, phonetic, part_of_speech, part_of_speech_uz, definition, example, translation_uz, audio_url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(book_id, unit_number, word_index) DO UPDATE SET
+                        word = excluded.word,
+                        phonetic = excluded.phonetic,
+                        part_of_speech = excluded.part_of_speech,
+                        part_of_speech_uz = excluded.part_of_speech_uz,
+                        definition = excluded.definition,
+                        example = excluded.example,
+                        translation_uz = excluded.translation_uz,
+                        audio_url = excluded.audio_url
+                """, (book_id, unit_id, unit_number, w_index, word_clean, phonetic, pos, pos_uz, defn, ex, tr_uz, audio_url))
+                added += 1
+
+            await db.commit()
+            return True, added, f"{added} ta so'z muvaffaqiyatli saqlandi!"
+        except Exception as e:
+            return False, 0, str(e)

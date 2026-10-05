@@ -56,6 +56,30 @@ BOOKS_INFO = {
         "units": 30,
         "words": 600,
     },
+    7: {
+        "title": "Reading for the Real World 1",
+        "badge": "📘 Book 7",
+        "cefr": "B1",
+        "desc": "Akademik o'qish va ilmiy mavzular (Compass Publishing).",
+        "units": 3,
+        "words": 45,
+    },
+    8: {
+        "title": "Reading for the Real World 2",
+        "badge": "📗 Book 8",
+        "cefr": "B2",
+        "desc": "Biznes, jamiyat va Jony Academy dasturidagi darslar.",
+        "units": 2,
+        "words": 30,
+    },
+    9: {
+        "title": "IELTS & Academic Core",
+        "badge": "📙 Book 9",
+        "cefr": "C1",
+        "desc": "IELTS 7.5 - 9.0 va ilmiy insholar uchun akademik so'zlar.",
+        "units": 1,
+        "words": 15,
+    },
 }
 
 PART_OF_SPEECH_MAP = {

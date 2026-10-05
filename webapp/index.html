@@ -1293,6 +1293,9 @@
       <button class="nav-btn" onclick="switchTab('search')">
         🔍 Qidiruv
       </button>
+      <button class="nav-btn" onclick="switchTab('import')">
+        📥 So'z qo'shish
+      </button>
     </nav>
   </div>
 
@@ -1808,6 +1811,66 @@
       </div>
       <div class="search-results" id="searchResults"></div>
     </section>
+
+    <!-- ==============================================
+         TAB 8: IMPORT VOCABULARY & CUSTOM UNITS
+    =============================================== -->
+    <section id="view-import" class="view-section">
+      <div style="background:var(--card-bg, #ffffff); border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:20px;">
+        <h3 style="margin-top:0; font-family:'Times New Roman', serif; font-size:1.4rem; color:var(--text, #1e293b);">
+          📥 Yangi so'zlar to'plamini yuklash (Import)
+        </h3>
+        <p style="color:var(--text-muted, #64748b); font-size:0.92rem; line-height:1.5;">
+          @Jonylearningbot, Jony Academy yoki boshqa istalgan manbalardagi so'zlarni bot bazasiga qo'shing. Qo'shilgan so'zlar darhol Flashcard, Quiz, Spelling va Matnlar ro'yxatida paydo bo'ladi.
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:16px;">
+          <div>
+            <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px; color:var(--text, #334155);">Kitobni tanlang</label>
+            <select id="importBookSelect" class="unit-select" style="width:100%;" onchange="onImportBookSelectChange()">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div id="newBookTitleGroup" style="display:none;">
+            <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px; color:var(--text, #334155);">Yangi kitob nomi</label>
+            <input type="text" id="importNewBookTitle" class="search-input" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px;" placeholder="Masalan: Reading for the Real World 3">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px; color:var(--text, #334155);">Unit raqami</label>
+            <input type="number" id="importUnitNum" class="search-input" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px;" value="1" min="1" max="100">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px; color:var(--text, #334155);">Unit mavzusi (Title)</label>
+            <input type="text" id="importUnitTitle" class="search-input" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px;" placeholder="Masalan: Corporate Social Responsibility">
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px; color:var(--text, #334155);">Unit Hikoyasi / Matni (Ixtiyoriy)</label>
+          <textarea id="importStory" rows="3" class="search-input" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; font-family:'Times New Roman', serif; resize:vertical;" placeholder="Unit bo'yicha akademik o'qish matni yoki hikoya..."></textarea>
+        </div>
+
+        <div style="margin-top:14px;">
+          <label style="display:block; font-size:0.85rem; font-weight:bold; margin-bottom:4px; color:var(--text, #334155);">
+            So'zlar ro'yxati (Format: <code>so'z - tarjimasi - ta'rifi</code>)
+          </label>
+          <p style="font-size:0.82rem; color:var(--text-muted, #64748b); margin:2px 0 6px 0;">
+            Har bir qatorga bittadan so'z yozing. Masalan: <i>corporation - korporatsiya, yirik kompaniya - A large company or entity</i>
+          </p>
+          <textarea id="importWordsText" rows="9" class="search-input" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px; font-family:'Times New Roman', serif; resize:vertical; font-size:0.95rem;" placeholder="corporation - korporatsiya - A large company
+shareholder - aksiyador - An owner of shares in a company
+profitability - foydalilik, rentabellik - Financial gain yield
+sustainable - barqaror - Maintained without depleting resources"></textarea>
+        </div>
+
+        <div style="margin-top:16px; display:flex; align-items:center; gap:12px;">
+          <button class="nav-btn active" style="padding:10px 24px; font-size:1rem; cursor:pointer;" onclick="submitImportWords()">
+            💾 Bazasiga Saqlash
+          </button>
+          <div id="importStatus" style="font-weight:bold; font-size:0.95rem;"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -1850,14 +1913,142 @@
     }
     updateUserNameInDOM();
 
-    const booksData = [
+    let booksData = [
       { id: 1, title: "Book 1 (Elementary)", cefr: "A2", desc: "Boshlang'ich daraja uchun 600 ta so'z", cls: "book-1", badge: "badge-b1" },
       { id: 2, title: "Book 2 (Pre-Intermediate)", cefr: "B1", desc: "Suhbat va matnlar uchun 600 ta so'z", cls: "book-2", badge: "badge-b2" },
       { id: 3, title: "Book 3 (Intermediate)", cefr: "B1+", desc: "IELTS va CEFR tayyorgarligi uchun 600 ta so'z", cls: "book-3", badge: "badge-b3" },
       { id: 4, title: "Book 4 (Upper-Intermediate)", cefr: "B2", desc: "Akademik va murakkab matnlar uchun 600 ta so'z", cls: "book-4", badge: "badge-b4" },
       { id: 5, title: "Book 5 (Advanced)", cefr: "B2+", desc: "IELTS 7.0+ va erkin nutq uchun 600 ta so'z", cls: "book-5", badge: "badge-b5" },
-      { id: 6, title: "Book 6 (Proficiency)", cefr: "C1", desc: "Professional akademik darajadagi 600 ta so'z", cls: "book-6", badge: "badge-b6" }
+      { id: 6, title: "Book 6 (Proficiency)", cefr: "C1", desc: "Professional akademik darajadagi 600 ta so'z", cls: "book-6", badge: "badge-b6" },
+      { id: 7, title: "Reading for the Real World 1", cefr: "B1", desc: "Akademik o'qish va ilmiy so'zlar", cls: "book-1", badge: "badge-b2" },
+      { id: 8, title: "Reading for the Real World 2", cefr: "B2", desc: "Jony Academy darslari & CSR mavzulari", cls: "book-2", badge: "badge-b4" },
+      { id: 9, title: "IELTS & Academic Core", cefr: "C1", desc: "IELTS 7.5 - 9.0 imtihon so'zlari", cls: "book-6", badge: "badge-b6" }
     ];
+
+    async function loadDynamicBooks() {
+      try {
+        const res = await fetch("/api/books");
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list) && list.length > 0) {
+            booksData = list.map(b => {
+              const clsNum = ((b.id - 1) % 6) + 1;
+              return {
+                id: b.id,
+                title: b.title,
+                cefr: b.cefr_level || "B2",
+                desc: b.description || `Kitob ${b.id}`,
+                cls: `book-${clsNum}`,
+                badge: `badge-b${clsNum}`
+              };
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load dynamic books", e);
+      }
+      renderBooks();
+      populateBookDropdowns();
+    }
+
+    function populateBookDropdowns() {
+      const optionsHtml = booksData.map(b => `<option value="${b.id}">${b.title} (${b.cefr})</option>`).join("");
+      const importOptionsHtml = optionsHtml + `<option value="new">➕ Yangi kitob yaratish...</option>`;
+      ["fcBookSelect", "quizBookSelect", "spellBookSelect"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const savedVal = el.value || currentBook;
+          el.innerHTML = optionsHtml;
+          if ([...el.options].some(o => o.value == savedVal)) {
+            el.value = savedVal;
+          }
+        }
+      });
+      const impSelect = document.getElementById("importBookSelect");
+      if (impSelect) {
+        const savedVal = impSelect.value || currentBook;
+        impSelect.innerHTML = importOptionsHtml;
+        if ([...impSelect.options].some(o => o.value == savedVal)) {
+          impSelect.value = savedVal;
+        }
+      }
+    }
+
+    function onImportBookSelectChange() {
+      const val = document.getElementById("importBookSelect")?.value;
+      const newGroup = document.getElementById("newBookTitleGroup");
+      if (newGroup) {
+        newGroup.style.display = (val === "new") ? "block" : "none";
+      }
+    }
+
+    async function submitImportWords() {
+      const bookSelectVal = document.getElementById("importBookSelect")?.value || "8";
+      let bookId = parseInt(bookSelectVal);
+      let bookTitle = null;
+      if (bookSelectVal === "new") {
+        bookTitle = document.getElementById("importNewBookTitle").value.trim() || "Yangi Maxsus Kitob";
+        bookId = Math.max(...booksData.map(b => b.id), 9) + 1;
+      }
+      const unitNum = parseInt(document.getElementById("importUnitNum").value) || 1;
+      const unitTitle = document.getElementById("importUnitTitle").value.trim() || `Unit ${unitNum}`;
+      const story = document.getElementById("importStory").value.trim();
+      const rawText = document.getElementById("importWordsText").value.trim();
+      
+      if (!rawText) {
+        alert("Iltimos, kamida bitta so'z kiriting!");
+        return;
+      }
+
+      const statusEl = document.getElementById("importStatus");
+      if (statusEl) {
+        statusEl.innerHTML = "⏳ Saqlanmoqda...";
+        statusEl.style.color = "#8b5cf6";
+      }
+
+      try {
+        const res = await fetch("/api/import_words", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            book_id: bookId,
+            book_title: bookTitle,
+            unit_number: unitNum,
+            unit_title: unitTitle,
+            story: story,
+            raw_text: rawText
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          if (statusEl) {
+            statusEl.innerHTML = `✅ ${data.count} ta so'z muvaffaqiyatli saqlandi! Unit ochilmoqda...`;
+            statusEl.style.color = "#10b981";
+          }
+          document.getElementById("importWordsText").value = "";
+          delete bookUnitsCache[bookId];
+          await loadDynamicBooks();
+          currentBook = bookId;
+          currentUnit = unitNum;
+          await loadWordsForSelectedUnit(currentBook, currentUnit);
+          await syncAllSelectors();
+          setTimeout(() => {
+            openUnitOverview(currentBook, currentUnit);
+            switchTab('books');
+          }, 1200);
+        } else {
+          if (statusEl) {
+            statusEl.innerHTML = `❌ Xatolik: ${data.error || 'Yuklab bo\'lmadi'}`;
+            statusEl.style.color = "#ef4444";
+          }
+        }
+      } catch (err) {
+        if (statusEl) {
+          statusEl.innerHTML = `❌ Xatolik yuz berdi: ${err.message}`;
+          statusEl.style.color = "#ef4444";
+        }
+      }
+    }
 
     // Global State
     let currentBook = 1;
@@ -1890,6 +2081,7 @@
     // Render Books Grid
     function renderBooks() {
       const container = document.getElementById("booksGrid");
+      if (!container) return;
       container.innerHTML = booksData.map(b => `
         <div class="book-card ${b.cls}" onclick="selectBook(${b.id})">
           <div class="book-info">
@@ -1907,7 +2099,9 @@
       document.getElementById("booksGridContainer").style.display = "none";
       document.getElementById("unitsContainer").style.display = "block";
       document.getElementById("unitOverviewContainer").style.display = "none";
-      document.getElementById("selectedBookTitle").innerText = `Book ${bookId} Unitlari (1-30)`;
+      const bObj = booksData.find(b => b.id === bookId);
+      const bName = bObj ? bObj.title : `Book ${bookId}`;
+      document.getElementById("selectedBookTitle").innerText = `${bName} Unitlari`;
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       const units = await fetchBookUnits(bookId);
@@ -2184,22 +2378,31 @@
     }
 
     async function syncAllSelectors() {
-      const bTitle = `Book ${currentBook} | Unit ${currentUnit}: ${currentUnitDetails?.title || ''}`;
+      populateBookDropdowns();
+      const bObj = booksData.find(b => b.id === currentBook);
+      const bName = bObj ? bObj.title : `Book ${currentBook}`;
+      const bTitle = `${bName} | Unit ${currentUnit}: ${currentUnitDetails?.title || ''}`;
       
       // Flashcards
-      document.getElementById("fcBookSelect").value = currentBook;
+      const fcB = document.getElementById("fcBookSelect");
+      if (fcB) fcB.value = currentBook;
       await populateUnitSelector("fcUnitSelect", currentBook);
-      document.getElementById("fcActiveUnitTitle").innerText = bTitle;
+      const fcTitle = document.getElementById("fcActiveUnitTitle");
+      if (fcTitle) fcTitle.innerText = bTitle;
 
       // Quiz
-      document.getElementById("quizBookSelect").value = currentBook;
+      const qB = document.getElementById("quizBookSelect");
+      if (qB) qB.value = currentBook;
       await populateUnitSelector("quizUnitSelect", currentBook);
-      document.getElementById("quizActiveUnitTitle").innerText = bTitle;
+      const qTitle = document.getElementById("quizActiveUnitTitle");
+      if (qTitle) qTitle.innerText = bTitle;
 
       // Spelling
-      document.getElementById("spellBookSelect").value = currentBook;
+      const sB = document.getElementById("spellBookSelect");
+      if (sB) sB.value = currentBook;
       await populateUnitSelector("spellUnitSelect", currentBook);
-      document.getElementById("spellActiveUnitTitle").innerText = bTitle;
+      const sTitle = document.getElementById("spellActiveUnitTitle");
+      if (sTitle) sTitle.innerText = bTitle;
     }
 
     async function onSelectorBookChange(mode) {
@@ -2862,11 +3065,16 @@
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".view-section").forEach(s => s.classList.remove("active"));
       
-      const tabOrder = ['books', 'cards', 'quiz', 'battle', 'spelling', 'stats', 'search'];
+      const tabOrder = ['books', 'cards', 'quiz', 'battle', 'spelling', 'stats', 'search', 'import'];
       const idx = tabOrder.indexOf(tab);
       if (idx !== -1) {
-        document.querySelectorAll(".nav-btn")[idx].classList.add("active");
-        document.getElementById(`view-${tab}`).classList.add("active");
+        const btns = document.querySelectorAll(".nav-btn");
+        if (btns[idx]) btns[idx].classList.add("active");
+        const sec = document.getElementById(`view-${tab}`);
+        if (sec) sec.classList.add("active");
+      }
+      if (tab === 'import') {
+        populateBookDropdowns();
       }
       if (tab === 'stats') {
         updateStatsView();
@@ -2988,12 +3196,10 @@
     // ==============================================
     // APP INITIALIZATION
     // ==============================================
-    // APP INITIALIZATION
-    // ==============================================
     async function initApp() {
       updateUserNameInDOM();
-      renderBooks();
-      // Show Books grid on startup so user sees all 6 books
+      await loadDynamicBooks();
+      // Show Books grid on startup so user sees all books
       document.getElementById("booksGridContainer").style.display = "grid";
       document.getElementById("unitsContainer").style.display = "none";
       document.getElementById("unitOverviewContainer").style.display = "none";

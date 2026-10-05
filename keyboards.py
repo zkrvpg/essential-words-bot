@@ -195,55 +195,90 @@ def leaderboard_kb() -> InlineKeyboardMarkup:
 
 def books_kb(books: list) -> InlineKeyboardMarkup:
     keyboard = []
-    badges = {1: "🟢", 2: "🟡", 3: "🟠", 4: "🔵", 5: "🟣", 6: "🔴"}
+    badges = {1: "🟢", 2: "🟡", 3: "🟠", 4: "🔵", 5: "🟣", 6: "🔴", 7: "📘", 8: "📗", 9: "📙"}
     for b in books:
         b_id = b["id"]
-        badge = badges.get(b_id, "📘")
+        badge = badges.get(b_id, "📖")
         cefr = b.get("cefr_level", "")
-        text = f"{badge} Book {b_id} ({cefr}) - 600 words"
+        title = b.get("title", f"Book {b_id}")
+        text = f"{badge} {title}"
         keyboard.append([InlineKeyboardButton(text, callback_data=f"book_{b_id}")])
     
+    keyboard.append([InlineKeyboardButton("📥 Yangi so'zlar yuklash (Import)", callback_data="prompt_import")])
     keyboard.append([InlineKeyboardButton("🏠 Bosh menyu", callback_data="main_menu")])
     return InlineKeyboardMarkup(keyboard)
 
-def units_kb(book_id: int, page: int = 0) -> InlineKeyboardMarkup:
-    start_unit = page * 10 + 1
-    end_unit = min(start_unit + 9, 30)
-
+def units_kb(book_id: int, units_list: list = None, page: int = 0) -> InlineKeyboardMarkup:
     keyboard = []
-    row1 = []
-    for u in range(start_unit, min(start_unit + 5, end_unit + 1)):
-        row1.append(InlineKeyboardButton(f"Unit {u}", callback_data=f"unit_{book_id}_{u}"))
-    keyboard.append(row1)
+    
+    if units_list is not None and len(units_list) > 0:
+        total_units = len(units_list)
+        per_page = 10
+        max_page = (total_units - 1) // per_page
+        page = min(page, max_page)
+        paged_units = units_list[page * per_page : (page + 1) * per_page]
+        
+        # If units have titles and there are <= 6, show 1 per row with title, else 2 per row
+        if len(units_list) <= 6:
+            for u in paged_units:
+                u_num = u.get("unit_number", 1)
+                u_title = u.get("title", f"Unit {u_num}")
+                keyboard.append([InlineKeyboardButton(f"Unit {u_num}: {u_title[:30]}", callback_data=f"unit_{book_id}_{u_num}")])
+        else:
+            for i in range(0, len(paged_units), 2):
+                row = []
+                u1 = paged_units[i]
+                u1_num = u1.get("unit_number", i + 1)
+                row.append(InlineKeyboardButton(f"Unit {u1_num}", callback_data=f"unit_{book_id}_{u1_num}"))
+                if i + 1 < len(paged_units):
+                    u2 = paged_units[i + 1]
+                    u2_num = u2.get("unit_number", i + 2)
+                    row.append(InlineKeyboardButton(f"Unit {u2_num}", callback_data=f"unit_{book_id}_{u2_num}"))
+                keyboard.append(row)
+                
+        nav_row = []
+        if page > 0:
+            nav_row.append(InlineKeyboardButton("⬅️ Oldingi", callback_data=f"units_page_{book_id}_{page - 1}"))
+        if page < max_page:
+            nav_row.append(InlineKeyboardButton("Keyingi ➡️", callback_data=f"units_page_{book_id}_{page + 1}"))
+        if nav_row:
+            keyboard.append(nav_row)
+    else:
+        start_unit = page * 10 + 1
+        end_unit = min(start_unit + 9, 30)
+        row1 = []
+        for u in range(start_unit, min(start_unit + 5, end_unit + 1)):
+            row1.append(InlineKeyboardButton(f"Unit {u}", callback_data=f"unit_{book_id}_{u}"))
+        keyboard.append(row1)
 
-    if end_unit >= start_unit + 5:
-        row2 = []
-        for u in range(start_unit + 5, end_unit + 1):
-            row2.append(InlineKeyboardButton(f"Unit {u}", callback_data=f"unit_{book_id}_{u}"))
-        keyboard.append(row2)
+        if end_unit >= start_unit + 5:
+            row2 = []
+            for u in range(start_unit + 5, end_unit + 1):
+                row2.append(InlineKeyboardButton(f"Unit {u}", callback_data=f"unit_{book_id}_{u}"))
+            keyboard.append(row2)
 
-    nav_row = []
-    if page > 0:
-        nav_row.append(InlineKeyboardButton("⬅️ Oldingi 10 ta", callback_data=f"units_page_{book_id}_{page - 1}"))
-    if page < 2:
-        nav_row.append(InlineKeyboardButton("Keyingi 10 ta ➡️", callback_data=f"units_page_{book_id}_{page + 1}"))
-    if nav_row:
-        keyboard.append(nav_row)
+        nav_row = []
+        if page > 0:
+            nav_row.append(InlineKeyboardButton("⬅️ Oldingi 10 ta", callback_data=f"units_page_{book_id}_{page - 1}"))
+        if page < 2:
+            nav_row.append(InlineKeyboardButton("Keyingi 10 ta ➡️", callback_data=f"units_page_{book_id}_{page + 1}"))
+        if nav_row:
+            keyboard.append(nav_row)
 
     keyboard.append([InlineKeyboardButton("🔙 Kitoblar ro'yxatiga", callback_data="view_books")])
     return InlineKeyboardMarkup(keyboard)
 
-def unit_menu_kb(book_id: int, unit_num: int) -> InlineKeyboardMarkup:
+def unit_menu_kb(book_id: int, unit_num: int, word_count: int = 20) -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🗂 So'zlarni o'rganish (1/20)", callback_data=f"word_{book_id}_{unit_num}_1")
+            InlineKeyboardButton(f"🗂 So'zlarni o'rganish (1/{word_count})", callback_data=f"word_{book_id}_{unit_num}_1")
         ],
         [
             InlineKeyboardButton("📝 Unit bo'yicha Test (Quiz)", callback_data=f"quiz_start_{book_id}_{unit_num}"),
-            InlineKeyboardButton("📖 Unit Hikoyasi", callback_data=f"story_{book_id}_{unit_num}")
+            InlineKeyboardButton("📖 Unit Hikoyasi / Matn", callback_data=f"story_{book_id}_{unit_num}")
         ],
         [
-            InlineKeyboardButton("📋 So'zlar ro'yxati (20 ta)", callback_data=f"wordlist_{book_id}_{unit_num}")
+            InlineKeyboardButton(f"📋 So'zlar ro'yxati ({word_count} ta)", callback_data=f"wordlist_{book_id}_{unit_num}")
         ],
         [
             InlineKeyboardButton("🔙 Unitlar ro'yxatiga", callback_data=f"book_{book_id}")
@@ -253,15 +288,15 @@ def unit_menu_kb(book_id: int, unit_num: int) -> InlineKeyboardMarkup:
 
 def word_card_kb(book_id: int, unit_num: int, word_index: int, word_id: int, 
                  is_starred: bool, is_known: bool, from_random: bool = False,
-                 from_bookmark: bool = False) -> InlineKeyboardMarkup:
+                 from_bookmark: bool = False, total_words: int = 20) -> InlineKeyboardMarkup:
     keyboard = []
-    prev_idx = word_index - 1 if word_index > 1 else 20
-    next_idx = word_index + 1 if word_index < 20 else 1
+    prev_idx = word_index - 1 if word_index > 1 else total_words
+    next_idx = word_index + 1 if word_index < total_words else 1
     
     if not from_random and not from_bookmark:
         keyboard.append([
             InlineKeyboardButton("⬅️ Oldingi", callback_data=f"word_{book_id}_{unit_num}_{prev_idx}"),
-            InlineKeyboardButton(f"📍 {word_index}/20", callback_data=f"wordlist_{book_id}_{unit_num}"),
+            InlineKeyboardButton(f"📍 {word_index}/{total_words}", callback_data=f"wordlist_{book_id}_{unit_num}"),
             InlineKeyboardButton("Keyingi ➡️", callback_data=f"word_{book_id}_{unit_num}_{next_idx}")
         ])
     elif from_random:

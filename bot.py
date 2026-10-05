@@ -52,7 +52,7 @@ active_quizzes: Dict[str, dict] = {}
 active_battles: Dict[str, dict] = {}
 user_spelling_sessions: Dict[int, dict] = {} # user_id -> spelling_data
 
-def format_word_card(word: dict, is_starred: bool, is_known: bool) -> str:
+def format_word_card(word: dict, is_starred: bool, is_known: bool, total_words: int = 20) -> str:
     """Formats an interactive flashcard for a word."""
     b_id = word["book_id"]
     u_num = word["unit_number"]
@@ -69,7 +69,7 @@ def format_word_card(word: dict, is_starred: bool, is_known: bool) -> str:
     example = word.get("example", "")
 
     text = (
-        f"📖 *Book {b_id}* | *Unit {u_num}* | So'z: *{w_idx}/20*{star_badge}{known_badge}\n"
+        f"📖 *Book {b_id}* | *Unit {u_num}* | So'z: *{w_idx}/{total_words}*{star_badge}{known_badge}\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"🔤 *{w}*  `{pro}`\n"
         f"📌 *Turkumi:* _{pos}_\n"
@@ -192,19 +192,45 @@ async def learn_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles /learn command."""
     books = await db.get_books()
     text = (
-        f"📚 *4000 Essential English Words - Kitoblar:*\n\n"
-        f"Kerakli kitobni tanlang:\n\n"
+        f"📚 *Mavjud Kitoblar va O'quv Dasturlari:*\n\n"
+        f"Kerakli kitob yoki kursni tanlang:\n\n"
         f"🟢 *Book 1 (A2)* - Boshlang'ich (Elementary)\n"
         f"🟡 *Book 2 (B1)* - O'rta-quyi (Pre-Intermediate)\n"
         f"🟠 *Book 3 (B1+)* - O'rta (Intermediate)\n"
         f"🔵 *Book 4 (B2)* - O'rtadan yuqori (Upper-Intermediate)\n"
         f"🟣 *Book 5 (B2+)* - Yuqori (Advanced)\n"
         f"🔴 *Book 6 (C1)* - Professional (Proficiency)\n"
+        f"📘 *Book 7 (B1)* - Reading for the Real World 1\n"
+        f"📗 *Book 8 (B2)* - Reading for the Real World 2 (Jony Academy)\n"
+        f"📙 *Book 9 (C1)* - IELTS & Academic Core\n\n"
+        f"Yoki yangi so'zlarni yuklash uchun pastdagi *Import* tugmasini bosing:"
     )
     if update.message:
         await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.books_kb(books))
     elif update.callback_query:
         await update.callback_query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.books_kb(books))
+
+async def import_words_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Guide the user on importing custom words or Jony bot words."""
+    url = tunnel_manager.get_web_app_url()
+    web_button = f"\n\n🚀 *WebApp'da qulay forma orqali yuklash:* [Mini App ochish]({url})" if url and url.startswith("https://") else ""
+    text = (
+        f"📥 *Yangi so'zlar to'plamini yuklash (Import):*\n\n"
+        f"@Jonylearningbot yoki boshqa kanallardagi so'zlarni botga osongina qo'shishingiz mumkin!\n\n"
+        f"📌 *1-Usul: Telegram orqali yuborish:*\n"
+        f"Menga quyidagi ko'rinishda xabar yuboring:\n\n"
+        f"`Kitob: 8`\n"
+        f"`Unit: 13`\n"
+        f"`Mavzu: Yangi Mavzu Nomi`\n"
+        f"`advantage - afzallik, ustunlik`\n"
+        f"`environment - atrof-muhit - the natural world`\n"
+        f"`sustainable - barqaror`\n\n"
+        f"📌 *2-Usul:* Shunchaki bir nechta so'zlarni `so'z - tarjimasi` qilib yuboring, bot ularni avtomatik tarzda bazaga qo'shadi!{web_button}"
+    )
+    if update.message:
+        await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+    elif update.callback_query:
+        await update.callback_query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN)
 
 async def practice_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles /practice command."""
@@ -324,18 +350,29 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await battle_command(update, context)
             return
 
+        # Prompt import
+        if data == "prompt_import":
+            await query.answer()
+            await import_words_command(update, context)
+            return
+
         # Book selected -> Show Units
         if data.startswith("book_"):
             await query.answer()
             b_id = int(data.split("_")[1])
             b_info = BOOKS_INFO.get(b_id, {})
+            b_db = await db.get_book(b_id)
+            title = b_info.get('title') or (b_db.get('title') if b_db else f'Book {b_id}')
+            cefr = b_info.get('cefr') or (b_db.get('cefr_level') if b_db else '')
+            desc = b_info.get('desc') or (b_db.get('description') if b_db else '')
+            units_list = await db.get_units(b_id)
             text = (
-                f"📚 *{b_info.get('title', f'Book {b_id}')}*\n"
-                f"🎯 Daraja: *{b_info.get('cefr', '')}*\n"
-                f"📝 {b_info.get('desc', '')}\n\n"
-                f"O'rganish uchun kerakli *Unit*ni tanlang (1-30):"
+                f"📚 *{title}*\n"
+                f"🎯 Daraja: *{cefr}*\n"
+                f"📝 {desc}\n\n"
+                f"O'rganish uchun kerakli *Unit*ni tanlang:"
             )
-            await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.units_kb(b_id, page=0))
+            await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.units_kb(b_id, units_list=units_list, page=0))
             return
 
         # Units pagination
@@ -345,8 +382,11 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             b_id = int(parts[2])
             page = int(parts[3])
             b_info = BOOKS_INFO.get(b_id, {})
-            text = f"📚 *{b_info.get('title', f'Book {b_id}')}*\n\nO'rganish uchun *Unit*ni tanlang (1-30):"
-            await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.units_kb(b_id, page=page))
+            b_db = await db.get_book(b_id)
+            title = b_info.get('title') or (b_db.get('title') if b_db else f'Book {b_id}')
+            units_list = await db.get_units(b_id)
+            text = f"📚 *{title}*\n\nO'rganish uchun *Unit*ni tanlang:"
+            await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.units_kb(b_id, units_list=units_list, page=page))
             return
 
         # Unit menu
@@ -357,13 +397,15 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             u_num = int(parts[2])
             unit = await db.get_unit(b_id, u_num)
             u_title = unit["title"] if unit else f"Unit {u_num}"
+            words = await db.get_unit_words(b_id, u_num)
+            w_count = len(words) or 20
             text = (
                 f"📖 *Book {b_id} | Unit {u_num}*\n"
                 f"🏷 *Mavzu:* {u_title}\n"
-                f"🔢 *So'zlar soni:* 20 ta yangi so'z\n\n"
+                f"🔢 *So'zlar soni:* {w_count} ta yangi so'z\n\n"
                 f"Nimani boshlamoqchisiz?"
             )
-            await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.unit_menu_kb(b_id, u_num))
+            await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=kb.unit_menu_kb(b_id, u_num, word_count=w_count))
             return
 
         # Word list for unit
@@ -425,10 +467,12 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.answer("So'z topilmadi!", show_alert=True)
                 return
                 
+            unit_words = await db.get_unit_words(b_id, u_num)
+            total_words = len(unit_words) or 20
             is_starred = await db.is_bookmarked(user.id, word["id"])
             is_known = await db.is_learned(user.id, word["id"])
-            card_text = format_word_card(word, is_starred, is_known)
-            reply_markup = kb.word_card_kb(b_id, u_num, w_idx, word["id"], is_starred, is_known)
+            card_text = format_word_card(word, is_starred, is_known, total_words=total_words)
+            reply_markup = kb.word_card_kb(b_id, u_num, w_idx, word["id"], is_starred, is_known, total_words=total_words)
             await query.edit_message_text(card_text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
             return
 
@@ -501,8 +545,10 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = "⭐ Lug'atga saqlandi!" if is_now_starred else "❌ Lug'atdan chiqarildi!"
             await query.answer(msg)
             word = await db.get_word(word_id)
-            card_text = format_word_card(word, is_now_starred, is_known)
-            reply_markup = kb.word_card_kb(b_id, u_num, w_idx, word_id, is_now_starred, is_known)
+            unit_words = await db.get_unit_words(b_id, u_num)
+            total_words = len(unit_words) or 20
+            card_text = format_word_card(word, is_now_starred, is_known, total_words=total_words)
+            reply_markup = kb.word_card_kb(b_id, u_num, w_idx, word_id, is_now_starred, is_known, total_words=total_words)
             await query.edit_message_text(card_text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
             return
 
@@ -519,8 +565,10 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = "✅ So'z yodlangan deb belgilandi! (+1)" if is_now_known else "⭕ Yodlanmagan holatga qaytarildi!"
             await query.answer(msg)
             word = await db.get_word(word_id)
-            card_text = format_word_card(word, is_starred, is_now_known)
-            reply_markup = kb.word_card_kb(b_id, u_num, w_idx, word_id, is_starred, is_now_known)
+            unit_words = await db.get_unit_words(b_id, u_num)
+            total_words = len(unit_words) or 20
+            card_text = format_word_card(word, is_starred, is_now_known, total_words=total_words)
+            reply_markup = kb.word_card_kb(b_id, u_num, w_idx, word_id, is_starred, is_now_known, total_words=total_words)
             await query.edit_message_text(card_text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
             return
 
@@ -1226,6 +1274,62 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # Check if text is an import payload (contains "Kitob:" or lines with "word - translation")
+    raw_lines = [l.strip() for l in text.split("\n") if l.strip()]
+    dash_lines = [l for l in raw_lines if " - " in l]
+    is_import_header = any(l.lower().startswith(("kitob:", "book:", "unit:")) for l in raw_lines)
+    if (len(dash_lines) >= 2) or (is_import_header and len(dash_lines) >= 1):
+        target_book = 8
+        target_unit = 1
+        unit_title = "Yuklangan so'zlar to'plami"
+        parsed_words = []
+        for line in raw_lines:
+            ll = line.lower()
+            if ll.startswith("kitob:") or ll.startswith("book:"):
+                try:
+                    target_book = int(line.split(":")[1].strip().split()[0])
+                except Exception:
+                    pass
+            elif ll.startswith("unit:"):
+                try:
+                    target_unit = int(line.split(":")[1].strip().split()[0])
+                except Exception:
+                    pass
+            elif ll.startswith("mavzu:") or ll.startswith("title:"):
+                unit_title = line.split(":", 1)[1].strip()
+            elif " - " in line:
+                parts = [p.strip() for p in line.split(" - ")]
+                w_text = parts[0]
+                tr_text = parts[1] if len(parts) > 1 else w_text
+                defn_text = parts[2] if len(parts) > 2 else f"Meaning of {w_text}."
+                parsed_words.append({
+                    "word": w_text,
+                    "translation_uz": tr_text,
+                    "definition": defn_text,
+                    "part_of_speech": "n.",
+                    "part_of_speech_uz": "ot (noun)",
+                    "example": f"Example sentence using {w_text}."
+                })
+        
+        if parsed_words:
+            ok, count, msg = await db.add_custom_words(
+                book_id=target_book,
+                unit_number=target_unit,
+                unit_title=unit_title,
+                words=parsed_words
+            )
+            if ok:
+                await update.message.reply_text(
+                    f"✅ *Muvaffaqiyatli yuklandi!*\n\n"
+                    f"📚 *Kitob:* {target_book}\n"
+                    f"📖 *Unit:* {target_unit} ({unit_title})\n"
+                    f"🔢 *Qo'shilgan so'zlar soni:* {count} ta\n\n"
+                    f"Endi ushbu so'zlarni botda yoki Mini App'da darhol mashq qilishingiz mumkin! 🚀",
+                    parse_mode=ParseMode.MARKDOWN,
+                    reply_markup=kb.unit_menu_kb(target_book, target_unit, word_count=count)
+                )
+                return
+
     # Text Search in database
     results = await db.search_words(text, limit=8)
     if not results:
@@ -1249,6 +1353,9 @@ def build_application() -> Application:
     # Commands
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("learn", learn_command))
+    app.add_handler(CommandHandler("import_words", import_words_command))
+    app.add_handler(CommandHandler("add_words", import_words_command))
+    app.add_handler(CommandHandler("import", import_words_command))
     app.add_handler(CommandHandler("practice", practice_command))
     app.add_handler(CommandHandler("battle", battle_command))
     app.add_handler(CommandHandler("cards", lambda u, c: practice_command(u, c)))

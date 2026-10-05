@@ -193,6 +193,60 @@ async def handle_api_battle_result(request):
         pass
     return web.json_response({"ok": False}, headers=CORS_HEADERS)
 
+async def handle_api_import_words(request):
+    try:
+        body = await request.json()
+        book_id = int(body.get("book_id", 8))
+        unit_number = int(body.get("unit_number", 1))
+        unit_title = body.get("unit_title", f"Unit {unit_number}").strip()
+        book_title = body.get("book_title", None)
+        story = body.get("story", "").strip()
+        raw_text = body.get("raw_text", "")
+        parsed_words = []
+
+        if "words" in body and isinstance(body["words"], list):
+            parsed_words = body["words"]
+        elif raw_text:
+            lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
+            for line in lines:
+                parts = []
+                if " - " in line:
+                    parts = [p.strip() for p in line.split(" - ")]
+                elif "\t" in line:
+                    parts = [p.strip() for p in line.split("\t")]
+                elif ":" in line:
+                    parts = [p.strip() for p in line.split(":", 1)]
+                else:
+                    parts = [line]
+
+                if parts:
+                    w_text = parts[0]
+                    tr_text = parts[1] if len(parts) > 1 else w_text
+                    defn_text = parts[2] if len(parts) > 2 else f"Meaning of {w_text}."
+                    parsed_words.append({
+                        "word": w_text,
+                        "translation_uz": tr_text,
+                        "definition": defn_text,
+                        "part_of_speech": "n.",
+                        "part_of_speech_uz": "ot (noun)",
+                        "example": f"Example sentence using {w_text}."
+                    })
+
+        if not parsed_words:
+            return web.json_response({"ok": False, "error": "Hech qanday so'z topilmadi"}, headers=CORS_HEADERS)
+
+        ok, count, msg = await db.add_custom_words(
+            book_id=book_id,
+            unit_number=unit_number,
+            unit_title=unit_title,
+            words=parsed_words,
+            book_title=book_title,
+            story=story
+        )
+        return web.json_response({"ok": ok, "count": count, "message": msg}, headers=CORS_HEADERS)
+    except Exception as e:
+        return web.json_response({"ok": False, "error": str(e)}, status=500, headers=CORS_HEADERS)
+
 async def handle_health(request):
     return web.json_response({"status": "ok", "app": "4000 Essential English Words"}, headers=CORS_HEADERS)
 
@@ -213,4 +267,5 @@ def create_web_app() -> web.Application:
     app.router.add_post("/api/user/toggle_bookmark", handle_api_toggle_bookmark)
     app.router.add_post("/api/user/quiz_result", handle_api_quiz_result)
     app.router.add_post("/api/user/battle_result", handle_api_battle_result)
+    app.router.add_post("/api/import_words", handle_api_import_words)
     return app
